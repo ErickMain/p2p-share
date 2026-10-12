@@ -1,0 +1,16 @@
+{
+  "name": "p2p-share",
+  "version": "0.1.0",
+  "description": "P2P screen sharing for small groups",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "signal": "node signaling/cli.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0"
+  }
+}

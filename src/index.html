@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>P2P Share</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- 1. Home -->
+    <section id="screen-home" class="screen">
+      <h1>P2P Share</h1>
+      <label class="field">
+        <span>Your name</span>
+        <input id="in-name" type="text" placeholder="erick" />
+      </label>
+      <label class="field">
+        <span>Room</span>
+        <input id="in-room" type="text" placeholder="sala-do-erick" />
+      </label>
+      <label class="field">
+        <span>Host address <small>(only to join — your friend's tailnet IP or name)</small></span>
+        <input id="in-hostaddr" type="text" placeholder="100.101.102.103" />
+      </label>
+
+      <div id="ts-status" class="ts-status">checking Tailscale…</div>
+
+      <div class="home-actions">
+        <button id="btn-host" class="primary">Share my screen</button>
+        <button id="btn-join">Join a stream</button>
+      </div>
+      <p id="home-error" class="error"></p>
+    </section>
+
+    <!-- 2. Source picker -->
+    <section id="screen-sources" class="screen hidden">
+      <h2>Pick what to share</h2>
+      <div class="tabs">
+        <button class="seg active" data-kind="screen">Screens</button>
+        <button class="seg" data-kind="window">Windows</button>
+      </div>
+      <div id="source-grid" class="source-grid"></div>
+      <footer class="bar">
+        <button class="link" data-goto="home">Back</button>
+      </footer>
+    </section>
+
+    <!-- 3. Settings (the Go Live panel) -->
+    <section id="screen-settings" class="screen hidden">
+      <div class="preview-frame">
+        <img id="preview-thumb" alt="" />
+      </div>
+
+      <h3 class="section-title">Basic Settings</h3>
+
+      <div class="row">
+        <span class="label"><i class="hint" title="Bundles every advanced setting below">?</i> Preset</span>
+        <div class="seg-group" id="seg-preset">
+          <button class="seg" data-v="360">360</button>
+          <button class="seg" data-v="480">480</button>
+          <button class="seg" data-v="720">720</button>
+          <button class="seg" data-v="1080">1080</button>
+          <button class="seg" data-v="1440">1440</button>
+          <button class="seg" data-v="source">Source</button>
+          <button class="seg" data-v="presentation">Presentation</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <span class="label"><i class="hint" title="Windows: captures what the machine is playing">?</i> Capture Audio</span>
+        <button id="tgl-audio" class="toggle" role="switch"><span></span></button>
+      </div>
+
+      <div class="row">
+        <span class="label"><i class="hint" title="Who may join the room">?</i> Privacy</span>
+        <div class="seg-group" id="seg-privacy">
+          <button class="seg" data-v="public">Public</button>
+          <button class="seg" data-v="contacts">Contacts</button>
+          <button class="seg" data-v="private">Private</button>
+        </div>
+      </div>
+
+      <h3 class="section-title accent" id="toggle-advanced">Advanced Settings <span class="chev">⌄</span></h3>
+
+      <div id="advanced">
+        <div class="row">
+          <span class="label"><i class="hint" title="Capture height; Source keeps the native size">?</i> Resolution</span>
+          <div class="seg-group" id="seg-res">
+            <button class="seg" data-v="360">360</button>
+            <button class="seg" data-v="480">480</button>
+            <button class="seg" data-v="720">720</button>
+            <button class="seg" data-v="1080">1080</button>
+            <button class="seg" data-v="1440">1440</button>
+            <button class="seg" data-v="0">Source</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <span class="label"><i class="hint" title="5 is for slides, 60 for games">?</i> FPS</span>
+          <div class="seg-group" id="seg-fps">
+            <button class="seg" data-v="5">5</button>
+            <button class="seg" data-v="30">30</button>
+            <button class="seg" data-v="60">60</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <span class="label"><i class="hint" title="Per viewer. Multiply by the audience to size your upload">?</i> Bitrate</span>
+          <div class="stepper">
+            <button class="step minus" data-step="-500">−</button>
+            <span><b id="val-bitrate">6500</b> Kbps</span>
+            <button class="step plus" data-step="500">+</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <span class="label"><i class="hint" title="Opus; 128+ turns on stereo">?</i> Audio Bitrate [Kbps]</span>
+          <div class="seg-group" id="seg-audio">
+            <button class="seg" data-v="64">64</button>
+            <button class="seg" data-v="96">96</button>
+            <button class="seg" data-v="128">128</button>
+            <button class="seg" data-v="192">192</button>
+            <button class="seg" data-v="256">256</button>
+            <button class="seg" data-v="320">320</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <span class="label"><i class="hint" title="0 means no limit">?</i> Viewer Limit</span>
+          <div class="stepper">
+            <button class="step minus" data-step="-1">−</button>
+            <b id="val-limit">0</b>
+            <button class="step plus" data-step="1">+</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <span class="label"><i class="hint" title="P2P is direct. Server mode is not built yet">?</i> Connection Mode</span>
+          <div class="seg-group" id="seg-mode">
+            <button class="seg" data-v="p2p">P2P</button>
+            <button class="seg disabled" data-v="server" disabled>Server</button>
+          </div>
+        </div>
+
+        <p id="upload-note" class="note"></p>
+      </div>
+
+      <footer class="bar">
+        <button class="link" data-goto="sources">Back</button>
+        <button id="btn-golive" class="primary">Go Live</button>
+      </footer>
+    </section>
+
+    <!-- 4. Live (host) -->
+    <section id="screen-live" class="screen hidden">
+      <div class="preview-frame live">
+        <video id="host-video" autoplay muted playsinline></video>
+      </div>
+      <div class="live-head">
+        <span class="dot"></span>
+        <b>Live in <span id="live-room"></span></b>
+        <span id="live-stats" class="muted"></span>
+      </div>
+      <div class="invite">
+        <span class="muted">Send your friends:</span>
+        <code id="invite-text"></code>
+        <button id="btn-copy" class="link">Copy</button>
+      </div>
+
+      <h3 class="section-title">Viewers (<span id="viewer-count">0</span>)</h3>
+      <ul id="viewer-list" class="viewers"></ul>
+      <footer class="bar">
+        <button id="btn-stop" class="danger">Stop sharing</button>
+      </footer>
+    </section>
+
+    <!-- 5. Watching -->
+    <section id="screen-watch" class="screen hidden">
+      <div class="preview-frame live">
+        <video id="watch-video" autoplay playsinline></video>
+      </div>
+      <p id="watch-status" class="muted"></p>
+      <footer class="bar">
+        <button id="btn-leave" class="danger">Leave</button>
+      </footer>
+    </section>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
