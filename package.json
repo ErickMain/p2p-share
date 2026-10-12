@@ -8,7 +8,8 @@
     "start": "electron .",
     "signal": "node signaling/cli.js",
     "dist": "electron-builder --win portable",
-    "dist:installer": "electron-builder --win nsis"
+    "dist:installer": "electron-builder --win nsis",
+    "release": "electron-builder --win portable --publish always"
   },
   "dependencies": {
     "ws": "^8.18.0"
@@ -29,6 +30,11 @@
       "signaling/**/*",
       "!tools/**/*"
     ],
+    "publish": {
+      "provider": "github",
+      "owner": "ErickMain",
+      "repo": "p2p-share"
+    },
     "win": {
       "target": "portable"
     },

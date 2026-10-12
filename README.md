@@ -115,22 +115,34 @@ Produces `dist/P2PShare-<version>-portable.exe` (~69 MB) — no installer, no
 admin rights, double-click and it runs. `npm run dist:installer` builds an NSIS
 setup instead if you'd rather have a Start Menu entry.
 
-To deliver it, use Taildrop. Your friends have to install Tailscale anyway for
-the app to work, so this adds no new dependency and the file goes straight from
-your machine to theirs:
+To publish it, build and upload in one step:
+
+```bash
+$env:GH_TOKEN = gh auth token   # PowerShell; export GH_TOKEN=$(gh auth token) elsewhere
+npm run release
+```
+
+That pushes the `.exe` to [GitHub Releases](https://github.com/ErickMain/p2p-share/releases),
+where your friends just click a link. The binary is never committed to the repo
+itself — 69 MB in the history would stay there forever; releases are a separate
+asset store meant for exactly this.
+
+The "no outside service" rule this app is built around is about the **running
+app**: signaling and media never touch a third party. Downloading the installer
+once is not part of that, and routing it through Taildrop would mean a friend
+has to already be on the tailnet to receive the thing that gets them onto the
+tailnet. If you do want machine-to-machine delivery anyway:
 
 ```bash
 tailscale file cp dist/P2PShare-0.1.0-portable.exe their-machine:
 ```
 
-They pick it up with `tailscale file get` (or the tray icon on Windows).
-
 The order that works:
 
-1. Friend installs Tailscale and signs in
-2. You invite them to your tailnet and they accept
-3. You Taildrop them the `.exe`
-4. They run it, enter the room name and your tailnet address
+1. Friend downloads the `.exe` from Releases
+2. Friend installs Tailscale and signs in
+3. You invite them to your tailnet and they accept
+4. They run the app, enter the room name and your tailnet address
 
 Windows SmartScreen will warn on first run, because the binary is unsigned —
 "More info" then "Run anyway". Signing it needs a code-signing certificate,
