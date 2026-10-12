@@ -75,8 +75,21 @@ export async function applySenderSettings(sender, settings) {
   if (!sender) return;
   const params = sender.getParameters();
   if (!params.encodings || params.encodings.length === 0) params.encodings = [{}];
-  params.encodings[0].maxBitrate = settings.bitrate * 1000;
-  params.encodings[0].maxFramerate = settings.fps;
+
+  const encoding = params.encodings[0];
+  encoding.maxBitrate = settings.bitrate * 1000;
+  encoding.maxFramerate = settings.fps;
+
+  // Electron hands getDisplayMedia a source directly, so the capture ignores
+  // our height constraint and arrives at native resolution. Without an explicit
+  // downscale the encoder tries to push every one of those pixels and starves
+  // the framerate instead -- which is how 1080p60 turns into 1 fps.
+  const captured = sender.track?.getSettings?.().height;
+  encoding.scaleResolutionDownBy =
+    settings.height > 0 && captured && captured > settings.height
+      ? captured / settings.height
+      : 1;
+
   params.degradationPreference =
     settings.hint === 'detail' ? 'maintain-resolution' : 'maintain-framerate';
   await sender.setParameters(params);

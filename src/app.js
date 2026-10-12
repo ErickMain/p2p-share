@@ -36,8 +36,14 @@ $('#in-hostaddr').value = localStorage.getItem('hostAddr') || '';
 let tailnet = { ok: false, ip: null, hostname: null, reason: 'checking' };
 
 async function probeTailscale() {
-  tailnet = await window.net.tailscale();
   const el = $('#ts-status');
+  // Absent when the renderer is opened in a plain browser for layout work.
+  if (!window.net) {
+    el.className = 'ts-status bad';
+    el.textContent = 'Running outside Electron — capture and hosting are unavailable.';
+    return;
+  }
+  tailnet = await window.net.tailscale();
   if (tailnet.ok) {
     el.className = 'ts-status ok';
     el.textContent = `Tailscale: ${tailnet.hostname || 'this machine'} — ${tailnet.ip}`;
@@ -109,6 +115,45 @@ $('#btn-join').addEventListener('click', async () => {
     homeError(err.message);
   }
 });
+
+/* ---------------------------------------------------------- viewer audio */
+
+// The host captures system-wide loopback, so whatever its machine is playing
+// comes down the stream -- including a voice call, which is how a viewer ends
+// up hearing themselves. Until per-process capture exists, the viewer needs
+// their own volume.
+const watchVideo = $('#watch-video');
+let lastVolume = 1;
+
+function setVolume(value, { remember = true } = {}) {
+  watchVideo.volume = value;
+  watchVideo.muted = value === 0;
+  if (remember && value > 0) lastVolume = value;
+  $('#vol').value = Math.round(value * 100);
+  $('#vol-label').textContent = `${Math.round(value * 100)}%`;
+  $('#btn-mute').textContent = value === 0 ? '🔇' : '🔊';
+  localStorage.setItem('volume', String(value));
+}
+
+$('#vol').addEventListener('input', (ev) => setVolume(Number(ev.target.value) / 100));
+
+$('#btn-mute').addEventListener('click', () =>
+  setVolume(watchVideo.volume === 0 ? lastVolume : 0, { remember: false })
+);
+
+$('#btn-fullscreen').addEventListener('click', () => {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else watchVideo.requestFullscreen();
+});
+
+document.addEventListener('keydown', (ev) => {
+  if ($('#screen-watch').classList.contains('hidden')) return;
+  if (ev.target.tagName === 'INPUT') return;
+  if (ev.key === 'm' || ev.key === 'M') $('#btn-mute').click();
+  if (ev.key === 'f' || ev.key === 'F') $('#btn-fullscreen').click();
+});
+
+setVolume(Number(localStorage.getItem('volume') ?? 1));
 
 $('#btn-leave').addEventListener('click', () => {
   viewer?.leave();
@@ -280,18 +325,42 @@ function renderViewers(peers) {
 
 // Outbound stats from the first peer: enough to tell whether the encoder is
 // actually hitting the bitrate you asked for.
+let lastBytes = 0;
+let lastAt = 0;
+
 function startStats() {
   stopStats();
+  lastBytes = 0;
+  lastAt = 0;
+
   statsTimer = setInterval(async () => {
     const peer = [...(host?.peers.values() ?? [])][0];
     if (!peer) return ($('#live-stats').textContent = '');
+
     const report = await peer.pc.getStats();
     for (const s of report.values()) {
-      if (s.type === 'outbound-rtp' && s.kind === 'video') {
-        const fps = s.framesPerSecond ? `${Math.round(s.framesPerSecond)} fps` : '';
-        const size = s.frameWidth ? `${s.frameWidth}×${s.frameHeight}` : '';
-        $('#live-stats').textContent = [size, fps].filter(Boolean).join(' · ');
+      if (s.type !== 'outbound-rtp' || s.kind !== 'video') continue;
+
+      const parts = [];
+      if (s.frameWidth) parts.push(`${s.frameWidth}×${s.frameHeight}`);
+      if (s.framesPerSecond != null) parts.push(`${Math.round(s.framesPerSecond)} fps`);
+
+      // Measured throughput, which is what the link actually carries -- not the
+      // cap we asked for.
+      const now = performance.now();
+      if (lastAt && s.bytesSent > lastBytes) {
+        const kbps = ((s.bytesSent - lastBytes) * 8) / (now - lastAt);
+        parts.push(`${Math.round(kbps)} kbps`);
       }
+      lastBytes = s.bytesSent;
+      lastAt = now;
+
+      // The single most useful field when quality is bad: it names the bottleneck.
+      if (s.qualityLimitationReason && s.qualityLimitationReason !== 'none') {
+        parts.push(`limited by ${s.qualityLimitationReason}`);
+      }
+
+      $('#live-stats').textContent = parts.join(' · ');
     }
   }, 1000);
 }

@@ -34,6 +34,15 @@ export class Host extends EventTarget {
     track.contentHint = this.settings.hint;
     track.addEventListener('ended', () => this.stop());
 
+    // The constraints passed to getDisplayMedia are ignored when the source
+    // comes from Electron's request handler, so ask the track again. It may
+    // still refuse, which is why the sender also downscales.
+    try {
+      await track.applyConstraints(videoConstraints(this.settings));
+    } catch {
+      /* capture stays native; scaleResolutionDownBy picks up the slack */
+    }
+
     this.dispatchEvent(new CustomEvent('stream', { detail: this.stream }));
     return this.stream;
   }

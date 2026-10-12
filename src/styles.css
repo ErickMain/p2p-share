@@ -240,6 +240,27 @@ button.danger { background: var(--red); }
   user-select: text;
 }
 
+.audio-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 9px 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.audio-bar input[type="range"] { flex: 1; accent-color: var(--accent); cursor: pointer; }
+.iconbtn {
+  background: none;
+  border: 0;
+  font-size: 17px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+#vol-label { min-width: 38px; text-align: right; }
+
 .muted { color: var(--muted); font-size: 12px; }
 .note { color: var(--muted); font-size: 12px; margin: 14px 0 0; }
 .error { color: #ff7b72; font-size: 13px; min-height: 18px; }
