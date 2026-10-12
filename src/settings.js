@@ -4,7 +4,7 @@ export const SIGNAL_PORT = 8787;
 // inside its own process; a viewer talks to the host's tailnet address.
 export const signalUrl = () => localStorage.getItem('signalUrl') || `ws://127.0.0.1:${SIGNAL_PORT}`;
 
-/** Accepts "100.76.142.97", "pc-erick", or a full ws:// URL. */
+/** Accepts a tailnet IP, a MagicDNS machine name, or a full ws:// URL. */
 export function toSignalUrl(input) {
   const value = String(input || '').trim();
   if (!value) return null;

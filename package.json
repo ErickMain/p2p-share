@@ -1,16 +1,44 @@
 {
   "name": "p2p-share",
   "version": "0.1.0",
-  "description": "P2P screen sharing for small groups",
+  "description": "P2P screen sharing over Tailscale, with no server to deploy",
+  "license": "MIT",
   "main": "electron/main.js",
   "scripts": {
     "start": "electron .",
-    "signal": "node signaling/cli.js"
+    "signal": "node signaling/cli.js",
+    "dist": "electron-builder --win portable",
+    "dist:installer": "electron-builder --win nsis"
   },
   "dependencies": {
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "electron": "^33.0.0"
+    "electron": "^33.0.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "net.p2pshare.app",
+    "productName": "P2P Share",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*",
+      "src/**/*",
+      "signaling/**/*",
+      "!tools/**/*"
+    ],
+    "win": {
+      "target": "portable"
+    },
+    "portable": {
+      "artifactName": "P2PShare-${version}-portable.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "P2PShare-${version}-setup.exe"
+    }
   }
 }

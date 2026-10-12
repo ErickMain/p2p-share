@@ -105,6 +105,37 @@ touching a knob afterwards clears the preset label.
   machine is playing. Windows only; on macOS and Linux it silently captures no
   system audio.
 
+## Giving it to your friends
+
+```bash
+npm run dist
+```
+
+Produces `dist/P2PShare-<version>-portable.exe` (~69 MB) — no installer, no
+admin rights, double-click and it runs. `npm run dist:installer` builds an NSIS
+setup instead if you'd rather have a Start Menu entry.
+
+To deliver it, use Taildrop. Your friends have to install Tailscale anyway for
+the app to work, so this adds no new dependency and the file goes straight from
+your machine to theirs:
+
+```bash
+tailscale file cp dist/P2PShare-0.1.0-portable.exe their-machine:
+```
+
+They pick it up with `tailscale file get` (or the tray icon on Windows).
+
+The order that works:
+
+1. Friend installs Tailscale and signs in
+2. You invite them to your tailnet and they accept
+3. You Taildrop them the `.exe`
+4. They run it, enter the room name and your tailnet address
+
+Windows SmartScreen will warn on first run, because the binary is unsigned —
+"More info" then "Run anyway". Signing it needs a code-signing certificate,
+which costs money and is not worth it for four friends.
+
 ## Layout work without Electron
 
 ```bash
